@@ -37,9 +37,14 @@ session = Session()
 # Title and Description
 st.title("📊 GICS Hierarchy Explorer")
 st.markdown("""
-Explore the **Global Industry Classification Standard (GICS)** through interactive visualizations.
-Filter sectors, drill down into industries, and analyze data relationships.
-""")
+Explore the **Global Industry Classification Standard (GICS)** through interactive visualizations.  
+GICS is a standardized system for classifying companies into sectors and industries, developed by MSCI (Morgan Stanley Capital International) and S&P Dow Jones.  
+
+<span style='font-size: 0.9em; color: gray;'><em>MSCI and S&P Dow Jones create tools to track and analyze markets.</em></span>  
+This classification system serves as a valuable reference for anyone looking to understand the structure of the global economy.
+
+🔗 [Learn more about GICS](https://www.msci.com/our-solutions/indexes/gics)
+""", unsafe_allow_html=True)
 
 # Get all sectors for filtering
 sectors = session.query(Sector).all()
