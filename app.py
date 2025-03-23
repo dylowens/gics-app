@@ -1,0 +1,192 @@
+import streamlit as st
+import pandas as pd
+import networkx as nx
+import plotly.graph_objects as go
+from pyvis.network import Network
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from models.models import Sector, IndustryGroup, Industry, SubIndustry
+import os
+from streamlit_agraph import agraph, Node, Edge, Config
+
+# Set page config
+st.set_page_config(
+    page_title="GICS Hierarchy Explorer",
+    page_icon="📊",
+    layout="wide"
+)
+
+
+# Prefer Streamlit secrets (prod), fallback to env (local dev)
+try:
+    DATABASE_URL = st.secrets["DATABASE_URL"]
+except FileNotFoundError:
+    DATABASE_URL = os.getenv("DATABASE_URL")
+
+# ✅ Error if still missing
+if not DATABASE_URL:
+    st.error("❌ DATABASE_URL is not set. Please configure it in Streamlit secrets or in a .env file.")
+    st.stop()
+
+
+# Initialize database connection
+engine = create_engine(DATABASE_URL)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+# Title and Description
+st.title("📊 GICS Hierarchy Explorer")
+st.markdown("""
+Explore the **Global Industry Classification Standard (GICS)** through interactive visualizations.
+Filter sectors, drill down into industries, and analyze data relationships.
+""")
+
+# Get all sectors for filtering
+sectors = session.query(Sector).all()
+
+# --- Hierarchical View & Data Statistics in one row ---
+st.header("📂 Hierarchical View & Data Statistics")
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    # Sector filter in the first column
+    selected_sector = st.selectbox(
+        "Select Sector", ["All"] + [sector.name for sector in sectors], index=0
+    )
+
+    if selected_sector == "All":
+        sectors_to_display = session.query(Sector).all()
+    else:
+        sectors_to_display = session.query(
+            Sector).filter_by(name=selected_sector).all()
+
+    for sector in sectors_to_display:
+        with st.expander(f"📁 {sector.name}", expanded=False):
+            for ig in sector.industry_groups:
+                st.markdown(
+                    f"&nbsp;&nbsp;&nbsp;&nbsp;📂 **Industry Group:** {ig.name}")
+                for industry in ig.industries:
+                    st.markdown(
+                        f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏭 **Industry:** {industry.name}")
+                    for sub in industry.sub_industries:
+                        st.markdown(
+                            f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏷 **Sub-Industry:** {sub.name}")
+                st.markdown("---")
+
+with col2:
+    st.header("📊 Data Statistics")
+    st.metric("Total Sectors", session.query(Sector).count())
+    st.metric("Total Industry Groups", session.query(IndustryGroup).count())
+    st.metric("Total Industries", session.query(Industry).count())
+    st.metric("Total Sub-Industries", session.query(SubIndustry).count())
+
+
+# 🌳 Tree Graph
+st.header("🌳 Tree Graph")
+
+layout_option = st.radio("Select Graph Layout", [
+    "Hierarchical", "Force Directed"])
+
+graph_placeholder = st.empty()
+
+with graph_placeholder.container():
+    st.info("🔄 Initializing GICS Tree Graph...")
+    with st.spinner(f"Building {layout_option} structure..."):
+        nodes = []
+        edges = []
+
+        # Root node
+        root_id = "root_GICS"
+        nodes.append(Node(
+            id=root_id,
+            label="GICS",
+            title="GICS",
+            size=25,
+            color="#FF4B4B"
+        ))
+
+        for sector in sectors:
+            sector_id = f"sector_{sector.id}"
+            nodes.append(Node(
+                id=sector_id,
+                label=sector.name,
+                title=sector.name,
+                size=20,
+                color="#FF9B9B"
+            ))
+            edges.append(Edge(source=root_id, target=sector_id, type="CURVE_SMOOTH"))
+
+            for ig in sector.industry_groups:
+                ig_id = f"ig_{ig.id}"
+                nodes.append(Node(
+                    id=ig_id,
+                    label=ig.name,
+                    title=ig.name,
+                    size=15,
+                    color="#4B4BFF"
+                ))
+                edges.append(Edge(source=sector_id, target=ig_id, type="CURVE_SMOOTH"))
+
+                for industry in ig.industries:
+                    industry_id = f"ind_{industry.id}"
+                    nodes.append(Node(
+                        id=industry_id,
+                        label=industry.name,
+                        title=industry.name,
+                        size=10,
+                        color="#9B9BFF"
+                    ))
+                    edges.append(Edge(source=ig_id, target=industry_id, type="CURVE_SMOOTH"))
+
+                    for sub in industry.sub_industries:
+                        sub_id = f"sub_{sub.id}"
+                        nodes.append(Node(
+                            id=sub_id,
+                            label=sub.name,
+                            title=sub.name,
+                            size=5,
+                            color="#DEDEDE"
+                        ))
+                        edges.append(Edge(source=industry_id, target=sub_id, type="CURVE_SMOOTH"))
+
+        config_kwargs = {
+            "width": 1200,
+            "height": 800,
+            "directed": True,
+            "physics": True,
+            "hierarchical": layout_option == "Hierarchical",
+            "node_size": 1000,
+            "node_color": "#666",
+            "node_text_size": 10,
+            "edge_color": "#666",
+            "edge_width": 1,
+            "drag_nodes": True,
+            "drag_edges": False,
+            "fit_view": True
+        }
+
+        if layout_option == "Hierarchical":
+            config_kwargs.update({
+                "hierarchical_sort_method": "directed",
+                "hierarchical_direction": "UD",
+                "hierarchical_level_separation": 150,
+                "hierarchical_node_separation": 150
+            })
+
+        config = Config(**config_kwargs)
+
+        graph_placeholder.empty()
+        with graph_placeholder.container():
+            agraph(nodes=nodes, edges=edges, config=config)
+
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center'>
+    <p>📊 Data Source: Global Industry Classification Standard (GICS)</p>
+    <p>📅 Last updated: 2024</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Close session
+session.close()
