@@ -1,0 +1,11 @@
+pandas>=2.2.3
+sqlalchemy>=2.0.23
+psycopg2-binary>=2.9.10
+python-dotenv>=1.0.0
+streamlit>=1.29.0
+plotly>=5.18.0
+requests>=2.31.0
+numpy>=1.26.0
+networkx>=3.2.1
+pyvis>=0.3.2
+streamlit-agraph>=0.0.45 
