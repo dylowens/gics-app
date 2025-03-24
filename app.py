@@ -17,17 +17,9 @@ st.set_page_config(
 )
 
 
-# Prefer Streamlit secrets (prod), fallback to env (local dev)
-try:
-    DATABASE_URL = st.secrets["DATABASE_URL"]
-except FileNotFoundError:
-    DATABASE_URL = os.getenv("DATABASE_URL")
 
-# ✅ Error if still missing
-if not DATABASE_URL:
-    st.error("❌ DATABASE_URL is not set. Please configure it in Streamlit secrets or in a .env file.")
-    st.stop()
-
+db_path = os.path.abspath("gics.db")
+DATABASE_URL = f"sqlite:///{db_path}"
 
 # Initialize database connection
 engine = create_engine(DATABASE_URL)
