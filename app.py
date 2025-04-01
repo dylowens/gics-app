@@ -40,7 +40,7 @@ if st.button("🔌 Test Stripe Checkout"):
         data = response.json()
         if "url" in data:
             st.success("✅ Redirecting to Stripe Checkout...")
-            st.experimental_redirect(data["url"])
+            st.switch_page(data["url"])
         else:
             st.error("❌ Unexpected response format.")
     except Exception as e:
