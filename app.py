@@ -18,6 +18,9 @@ st.set_page_config(
     layout="wide"
 )
 
+# Add Supabase key
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+
 if st.button("🔌 Test Stripe Checkout"):
     try:
         # Use the deployed Supabase function URL
@@ -25,14 +28,16 @@ if st.button("🔌 Test Stripe Checkout"):
         
         response = requests.post(
             API_URL,
-            headers={"Content-Type": "application/json"},  # 👈 Add this
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+            },
             json={
                 "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
             }
         )
 
-        st.write("🔍 Raw response text:", response.text)  # 👈 Logs full response body
-
+        st.write("🔍 Raw response text:", response.text)
         
         data = response.json()
         if "url" in data:
