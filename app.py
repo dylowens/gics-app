@@ -44,7 +44,7 @@ if st.button("☕ Buy Me a Coffee"):
             checkout_url = data.get("url")
 
             if checkout_url:
-                st.success("✅ Ready to redirect to Stripe Checkout")
+                # st.success("✅")
                 st.markdown(f"""
                     <a href="{checkout_url}" target="_blank">
                         <button style='padding:0.5rem 1rem; font-size:1rem; background:#635bff; color:white; border:none; border-radius:6px; cursor:pointer;'>
