@@ -18,12 +18,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# Add Supabase key
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 if st.button("🔌 Test Stripe Checkout"):
     try:
-        # Use the deployed Supabase function URL
         API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
         
         response = requests.post(
@@ -42,13 +40,11 @@ if st.button("🔌 Test Stripe Checkout"):
         data = response.json()
         if "url" in data:
             st.success("✅ Redirecting to Stripe Checkout...")
-            st.markdown(f'<meta http-equiv="refresh" content="0; URL={data["url"]}">', unsafe_allow_html=True)
+            st.experimental_redirect(data["url"])
         else:
             st.error("❌ Unexpected response format.")
     except Exception as e:
         st.error(f"❌ Could not reach checkout function: {e}")
-
-
 
 
 
