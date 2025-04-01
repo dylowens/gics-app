@@ -23,6 +23,7 @@ import os
 
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
+API_URL_TEST = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session-test"
 
 if st.button("☕ Buy Me a Coffee"):
     if not SUPABASE_ANON_KEY:
@@ -30,7 +31,7 @@ if st.button("☕ Buy Me a Coffee"):
     else:
         try:
             response = requests.post(
-                API_URL,
+                API_URL_TEST,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
