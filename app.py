@@ -40,8 +40,6 @@ if st.button("🔌 Test Stripe Checkout"):
                 }
             )
 
-            st.write("🔍 Raw response text:", response.text)
-
             data = response.json()
             checkout_url = data.get("url")
 
@@ -58,6 +56,9 @@ if st.button("🔌 Test Stripe Checkout"):
                 st.error("❌ No checkout URL returned.")
         except Exception as e:
             st.error(f"❌ Could not reach checkout function: {e}")
+
+
+
 db_path = os.path.abspath("gics.db")
 DATABASE_URL = f"sqlite:///{db_path}"
 
