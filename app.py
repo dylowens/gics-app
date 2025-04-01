@@ -20,6 +20,8 @@ st.set_page_config(
 
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
+checkout_url = "https://checkout.stripe.com/c/pay/cs_test_1234567890abcdef"
+
 if st.button("🔌 Test Stripe Checkout"):
     try:
         API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
@@ -53,7 +55,7 @@ if st.button("🔌 Test Stripe Checkout"):
     except Exception as e:
         st.error(f"❌ Could not reach checkout function: {e}")
 
-        checkout_url = "https://checkout.stripe.com/c/pay/cs_test_1234567890abcdef"
+
 
 st.markdown(f"""
     <a href="{checkout_url}" target="_blank">
