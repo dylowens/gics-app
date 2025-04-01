@@ -9,12 +9,23 @@ from models.models import Sector, IndustryGroup, Industry, SubIndustry
 import os
 from streamlit_agraph import agraph, Node, Edge, Config
 
+import requests
+
 # Set page config
 st.set_page_config(
     page_title="GICS Hierarchy Explorer",
     page_icon="📊",
     layout="wide"
 )
+
+if st.button("🔌 Test FastAPI Connection"):
+    try:
+        response = requests.get("http://localhost:8000/")
+        st.success(f"✅ FastAPI says: {response.json()['message']}")
+    except Exception as e:
+        st.error(f"❌ Could not reach FastAPI: {e}")
+
+
 
 
 
