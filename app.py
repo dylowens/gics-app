@@ -20,7 +20,8 @@ st.set_page_config(
 
 if st.button("🔌 Test FastAPI Connection"):
     try:
-        response = requests.get("http://localhost:8000/")
+        API_URL = os.getenv("API_URL", "http://localhost:8000")  # fallback for local
+        response = requests.get(API_URL)
         st.success(f"✅ FastAPI says: {response.json()['message']}")
     except Exception as e:
         st.error(f"❌ Could not reach FastAPI: {e}")
