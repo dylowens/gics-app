@@ -36,13 +36,13 @@ if st.button("🔌 Test Stripe Checkout"):
         )
 
         st.write("🔍 Raw response text:", response.text)
-        
+
         data = response.json()
         if "url" in data:
             st.success("✅ Redirecting to Stripe Checkout...")
             st.markdown(f"""
                 <script>
-                    window.top.location.href = "{data['url']}";
+                    window.open("{data['url']}", "_blank");
                 </script>
             """, unsafe_allow_html=True)
         else:
