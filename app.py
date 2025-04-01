@@ -53,6 +53,16 @@ if st.button("🔌 Test Stripe Checkout"):
     except Exception as e:
         st.error(f"❌ Could not reach checkout function: {e}")
 
+        checkout_url = "https://checkout.stripe.com/c/pay/cs_test_1234567890abcdef"
+
+st.markdown(f"""
+    <a href="{checkout_url}" target="_blank">
+        <button style='padding:0.75rem 1.5rem; font-size:1.1rem; background:#635bff; color:white; border:none; border-radius:8px; cursor:pointer;'>
+            🧾 Buy Coffee ($5)
+        </button>
+    </a>
+""", unsafe_allow_html=True)
+
 
 
 db_path = os.path.abspath("gics.db")
