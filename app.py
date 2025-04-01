@@ -20,17 +20,39 @@ st.set_page_config(
 
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
-checkout_url = "https://checkout.stripe.com/c/pay/cs_test_a1obWhk5XW4ZfYHO0wBQyDkAaD7gCx2WvQDweTNfnAGaclWpJFb8pY4cMN#fidkdWxOYHwnPyd1blpxYHZxWjA0VzwzYzNXQmdKYl1PVm5OUEpBYGpEZmxgV0hvcUhpaEBxYjdHUXRfUzZyRHc0XDFoY0FdbV18d3VPbmdEbXVANn1UdV11VEc0bF93SGBtcHVMaU9EVU5oNTVdTTJhT2g3UScpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl"
+if st.button("🔌 Test Stripe Checkout"):
+    try:
+        API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
+        
+        response = requests.post(
+            API_URL,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+            },
+            json={
+                "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
+            }
+        )
 
+        st.write("🔍 Raw response text:", response.text)
 
-
-st.markdown(f"""
-    <a href="{checkout_url}" target="_blank">
-        <button style='padding:0.75rem 1.5rem; font-size:1.1rem; background:#635bff; color:white; border:none; border-radius:8px; cursor:pointer;'>
-            🧾 Buy Me a Coffee ($5)
-        </button>
-    </a>
-""", unsafe_allow_html=True)
+        data = response.json()
+        if "url" in data:
+            st.success("✅ Redirecting to Stripe Checkout...")
+            checkout_url = data["url"]
+            st.markdown(f"""
+                <a href="{checkout_url}" target="_blank">
+                    <button style='padding:0.5rem 1rem; font-size:1rem; background:#635bff; color:white; border:none; border-radius:6px; cursor:pointer;'>
+                        👉 Continue to Stripe Checkout
+                    </button>
+                </a>
+            """, unsafe_allow_html=True)
+        else:
+            st.error("❌ Unexpected response format.")
+    except Exception as e:
+        st.error(f"❌ Could not reach checkout function: {e}")
+        
 
 
 
