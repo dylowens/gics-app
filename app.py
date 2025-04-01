@@ -20,7 +20,8 @@ st.set_page_config(
 
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
-checkout_url = "https://checkout.stripe.com/c/pay/cs_test_1234567890abcdef"
+checkout_url = "https://checkout.stripe.com/c/pay/cs_test_a1obWhk5XW4ZfYHO0wBQyDkAaD7gCx2WvQDweTNfnAGaclWpJFb8pY4cMN#fidkdWxOYHwnPyd1blpxYHZxWjA0VzwzYzNXQmdKYl1PVm5OUEpBYGpEZmxgV0hvcUhpaEBxYjdHUXRfUzZyRHc0XDFoY0FdbV18d3VPbmdEbXVANn1UdV11VEc0bF93SGBtcHVMaU9EVU5oNTVdTTJhT2g3UScpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl"
+
 
 if st.button("🔌 Test Stripe Checkout"):
     try:
