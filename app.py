@@ -41,7 +41,13 @@ if st.button("🔌 Test Stripe Checkout"):
         if "url" in data:
             st.success("✅ Redirecting to Stripe Checkout...")
             checkout_url = data["url"]
-            st.markdown(f"[👉 Click here to continue to Stripe Checkout]({checkout_url})", unsafe_allow_html=True)
+            st.markdown(f"""
+                <a href="{checkout_url}" target="_blank">
+                    <button style='padding:0.5rem 1rem; font-size:1rem; background:#635bff; color:white; border:none; border-radius:6px; cursor:pointer;'>
+                        👉 Continue to Stripe Checkout
+                    </button>
+                </a>
+            """, unsafe_allow_html=True)
         else:
             st.error("❌ Unexpected response format.")
     except Exception as e:
