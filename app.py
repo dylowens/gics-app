@@ -17,45 +17,47 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+import streamlit as st
+import requests
+import os
 
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
 
 if st.button("🔌 Test Stripe Checkout"):
-    try:
-        API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
-        
-        response = requests.post(
-            API_URL,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
-            },
-            json={
-                "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
-            }
-        )
+    if not SUPABASE_ANON_KEY:
+        st.error("❌ SUPABASE_ANON_KEY not set in environment variables.")
+    else:
+        try:
+            response = requests.post(
+                API_URL,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+                },
+                json={
+                    "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
+                }
+            )
 
-        st.write("🔍 Raw response text:", response.text)
+            st.write("🔍 Raw response text:", response.text)
 
-        data = response.json()
-        if "url" in data:
-            st.success("✅ Redirecting to Stripe Checkout...")
-            checkout_url = data["url"]
-            st.markdown(f"""
-                <a href="{checkout_url}" target="_blank">
-                    <button style='padding:0.5rem 1rem; font-size:1rem; background:#635bff; color:white; border:none; border-radius:6px; cursor:pointer;'>
-                        👉 Continue to Stripe Checkout
-                    </button>
-                </a>
-            """, unsafe_allow_html=True)
-        else:
-            st.error("❌ Unexpected response format.")
-    except Exception as e:
-        st.error(f"❌ Could not reach checkout function: {e}")
-        
+            data = response.json()
+            checkout_url = data.get("url")
 
-
-
+            if checkout_url:
+                st.success("✅ Ready to redirect to Stripe Checkout")
+                st.markdown(f"""
+                    <a href="{checkout_url}" target="_blank">
+                        <button style='padding:0.5rem 1rem; font-size:1rem; background:#635bff; color:white; border:none; border-radius:6px; cursor:pointer;'>
+                            👉 Continue to Stripe Checkout
+                        </button>
+                    </a>
+                """, unsafe_allow_html=True)
+            else:
+                st.error("❌ No checkout URL returned.")
+        except Exception as e:
+            st.error(f"❌ Could not reach checkout function: {e}")
 db_path = os.path.abspath("gics.db")
 DATABASE_URL = f"sqlite:///{db_path}"
 
