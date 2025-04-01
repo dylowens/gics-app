@@ -18,13 +18,23 @@ st.set_page_config(
     layout="wide"
 )
 
-if st.button("🔌 Test FastAPI Connection"):
+if st.button("🔌 Test Stripe Checkout"):
     try:
-        API_URL = os.getenv("API_URL", "http://localhost:8000")  # fallback for local
-        response = requests.get(API_URL)
-        st.success(f"✅ FastAPI says: {response.json()['message']}")
+        # Use the deployed Supabase function URL
+        API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
+        
+        response = requests.post(API_URL, json={
+            "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
+        })
+        
+        data = response.json()
+        if "url" in data:
+            st.success("✅ Redirecting to Stripe Checkout...")
+            st.markdown(f'<meta http-equiv="refresh" content="0; URL={data["url"]}">', unsafe_allow_html=True)
+        else:
+            st.error("❌ Unexpected response format.")
     except Exception as e:
-        st.error(f"❌ Could not reach FastAPI: {e}")
+        st.error(f"❌ Could not reach checkout function: {e}")
 
 
 
