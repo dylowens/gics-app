@@ -23,9 +23,16 @@ if st.button("🔌 Test Stripe Checkout"):
         # Use the deployed Supabase function URL
         API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
         
-        response = requests.post(API_URL, json={
-            "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
-        })
+        response = requests.post(
+            API_URL,
+            headers={"Content-Type": "application/json"},  # 👈 Add this
+            json={
+                "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
+            }
+        )
+
+        st.write("🔍 Raw response text:", response.text)  # 👈 Logs full response body
+
         
         data = response.json()
         if "url" in data:
