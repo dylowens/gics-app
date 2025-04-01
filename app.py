@@ -31,7 +31,8 @@ if st.button("☕ Buy Me a Coffee"):
     else:
         try:
             response = requests.post(
-                API_URL_TEST,
+                #Change this to API_URL_TEST for testing
+                API_URL,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
