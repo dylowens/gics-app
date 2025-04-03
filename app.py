@@ -1,29 +1,18 @@
+import os
+import requests
 import streamlit as st
-import pandas as pd
-import networkx as nx
-import plotly.graph_objects as go
-from pyvis.network import Network
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models.models import Sector, IndustryGroup, Industry, SubIndustry
-import os
 from streamlit_agraph import agraph, Node, Edge, Config
+from models.models import Sector as GICSSector, IndustryGroup as GICSGroup, Industry as GICSIndustry, SubIndustry as GICSSub
+from models.naics_models import Sector, IndustryGroup, Industry, SubIndustry  # NAICS models
 
-import requests
+# --- Page Setup ---
+st.set_page_config(page_title="NAICS Hierarchy Explorer", page_icon="📊", layout="wide")
 
-# Set page config
-st.set_page_config(
-    page_title="GICS Hierarchy Explorer",
-    page_icon="📊",
-    layout="wide"
-)
-import streamlit as st
-import requests
-import os
-
+# --- Buy Me a Coffee ---
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
-API_URL_TEST = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session-test"
 
 if st.button("☕ Buy Me a Coffee"):
     if not SUPABASE_ANON_KEY:
@@ -31,22 +20,15 @@ if st.button("☕ Buy Me a Coffee"):
     else:
         try:
             response = requests.post(
-                #Change this to API_URL_TEST for testing
                 API_URL,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
                 },
-                json={
-                    "items": [{"name": "Coffee", "price": 500, "quantity": 1}]
-                }
+                json={"items": [{"name": "Coffee", "price": 500, "quantity": 1}]}
             )
-
-            data = response.json()
-            checkout_url = data.get("url")
-
+            checkout_url = response.json().get("url")
             if checkout_url:
-                # st.success("✅")
                 st.markdown(f"""
                     <a href="{checkout_url}" target="_blank">
                         <button style='padding:0.5rem 1rem; font-size:1rem; background:#635bff; color:white; border:none; border-radius:6px; cursor:pointer;'>
@@ -59,18 +41,60 @@ if st.button("☕ Buy Me a Coffee"):
         except Exception as e:
             st.error(f"❌ Could not reach checkout function: {e}")
 
+# --- Database Connections ---
+naics_engine = create_engine(f"sqlite:///{os.path.abspath('naics.db')}")
+naics_session = sessionmaker(bind=naics_engine)()
 
+gics_engine = create_engine(f"sqlite:///{os.path.abspath('gics.db')}")
+gics_session = sessionmaker(bind=gics_engine)()
 
-db_path = os.path.abspath("gics.db")
-DATABASE_URL = f"sqlite:///{db_path}"
+# --- Title ---
+st.title("📊 NAICS Hierarchy Explorer")
+st.markdown("""
+Explore the North American Industry categories through the **North American Industry Classification System (NAICS)**.
 
-# Initialize database connection
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
-session = Session()
+NAICS is the official standard used by the U.S., Canada, and Mexico to classify businesses by industry.  
+It organizes the economy into a structured hierarchy—from broad sectors to detailed industry codes.
 
-# Title and Description
-st.title("📊 GICS Hierarchy Explorer")
+<span style='font-size: 0.9em; color: gray;'><em>Used for economic analysis, business research, and government reporting.</em></span>  
+🔗 [Learn more about NAICS](https://www.census.gov/naics/)
+""", unsafe_allow_html=True)
+
+# --- Hierarchical View ---
+st.header("📂 Hierarchical View & Data Statistics")
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    sectors = naics_session.query(Sector).all()
+    selected_sector = st.selectbox("Select Sector", ["All"] + [s.name for s in sectors], index=0)
+
+    if selected_sector == "All":
+        sectors_to_display = sectors
+    else:
+        sectors_to_display = [s for s in sectors if s.name == selected_sector]
+
+    for sector in sectors_to_display:
+        with st.expander(f"📁 {sector.name}", expanded=False):
+            for ig in sector.industry_groups:
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;📂 **{ig.code} - {ig.name}**", unsafe_allow_html=True)
+                for ind in ig.industries:
+                    st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏭 **{ind.code} - {ind.name}**", unsafe_allow_html=True)
+                    for sub in ind.sub_industries:
+                        st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏷 {sub.name}", unsafe_allow_html=True)
+            st.markdown("---")
+
+with col2:
+    st.header("📊 Data Statistics")
+    st.metric("Total Sectors", naics_session.query(Sector).count())
+    st.metric("Total Industry Groups", naics_session.query(IndustryGroup).count())
+    st.metric("Total Industries", naics_session.query(Industry).count())
+    st.metric("Total Sub-Industries", naics_session.query(SubIndustry).count())
+
+# --- Tree Graph from GICS DB ---
+
+st.title("🌳 GICS Tree Graph Explorer")
+st.header(" Tree Graph - GICS")
+
 st.markdown("""
 Explore the **Global Industry Classification Standard (GICS)** through interactive visualizations.  
 GICS is a standardized system for classifying companies into sectors and industries, developed by MSCI (Morgan Stanley Capital International) and S&P Dow Jones.  
@@ -81,112 +105,36 @@ This classification system serves as a valuable reference for anyone looking to 
 🔗 [Learn more about GICS](https://www.msci.com/our-solutions/indexes/gics)
 """, unsafe_allow_html=True)
 
-# Get all sectors for filtering
-sectors = session.query(Sector).all()
-
-# --- Hierarchical View & Data Statistics in one row ---
-st.header("📂 Hierarchical View & Data Statistics")
-col1, col2 = st.columns([3, 1])
-
-with col1:
-    # Sector filter in the first column
-    selected_sector = st.selectbox(
-        "Select Sector", ["All"] + [sector.name for sector in sectors], index=0
-    )
-
-    if selected_sector == "All":
-        sectors_to_display = session.query(Sector).all()
-    else:
-        sectors_to_display = session.query(
-            Sector).filter_by(name=selected_sector).all()
-
-    for sector in sectors_to_display:
-        with st.expander(f"📁 {sector.name}", expanded=False):
-            for ig in sector.industry_groups:
-                st.markdown(
-                    f"&nbsp;&nbsp;&nbsp;&nbsp;📂 **Industry Group:** {ig.name}")
-                for industry in ig.industries:
-                    st.markdown(
-                        f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏭 **Industry:** {industry.name}")
-                    for sub in industry.sub_industries:
-                        st.markdown(
-                            f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏷 **Sub-Industry:** {sub.name}")
-                st.markdown("---")
-
-with col2:
-    st.header("📊 Data Statistics")
-    st.metric("Total Sectors", session.query(Sector).count())
-    st.metric("Total Industry Groups", session.query(IndustryGroup).count())
-    st.metric("Total Industries", session.query(Industry).count())
-    st.metric("Total Sub-Industries", session.query(SubIndustry).count())
-
-
-# 🌳 Tree Graph
-st.header("🌳 Tree Graph")
-
-layout_option = st.radio("Select Graph Layout", [
-    "Hierarchical", "Force Directed"])
-
+layout_option = st.radio("Select Graph Layout", ["Hierarchical", "Force Directed"])
 graph_placeholder = st.empty()
 
 with graph_placeholder.container():
     st.info("🔄 Initializing GICS Tree Graph...")
     with st.spinner(f"Building {layout_option} structure..."):
-        nodes = []
-        edges = []
+        nodes, edges = [], []
 
-        # Root node
         root_id = "root_GICS"
-        nodes.append(Node(
-            id=root_id,
-            label="GICS",
-            title="GICS",
-            size=25,
-            color="#FF4B4B"
-        ))
+        nodes.append(Node(id=root_id, label="GICS", title="GICS", size=25, color="#FF4B4B"))
 
-        for sector in sectors:
+        gics_sectors = gics_session.query(GICSSector).all()
+        for sector in gics_sectors:
             sector_id = f"sector_{sector.id}"
-            nodes.append(Node(
-                id=sector_id,
-                label=sector.name,
-                title=sector.name,
-                size=20,
-                color="#FF9B9B"
-            ))
+            nodes.append(Node(id=sector_id, label=sector.name, title=sector.name, size=20, color="#FF9B9B"))
             edges.append(Edge(source=root_id, target=sector_id, type="CURVE_SMOOTH"))
 
             for ig in sector.industry_groups:
                 ig_id = f"ig_{ig.id}"
-                nodes.append(Node(
-                    id=ig_id,
-                    label=ig.name,
-                    title=ig.name,
-                    size=15,
-                    color="#4B4BFF"
-                ))
+                nodes.append(Node(id=ig_id, label=ig.name, title=ig.name, size=15, color="#4B4BFF"))
                 edges.append(Edge(source=sector_id, target=ig_id, type="CURVE_SMOOTH"))
 
                 for industry in ig.industries:
                     industry_id = f"ind_{industry.id}"
-                    nodes.append(Node(
-                        id=industry_id,
-                        label=industry.name,
-                        title=industry.name,
-                        size=10,
-                        color="#9B9BFF"
-                    ))
+                    nodes.append(Node(id=industry_id, label=industry.name, title=industry.name, size=10, color="#9B9BFF"))
                     edges.append(Edge(source=ig_id, target=industry_id, type="CURVE_SMOOTH"))
 
                     for sub in industry.sub_industries:
                         sub_id = f"sub_{sub.id}"
-                        nodes.append(Node(
-                            id=sub_id,
-                            label=sub.name,
-                            title=sub.name,
-                            size=5,
-                            color="#DEDEDE"
-                        ))
+                        nodes.append(Node(id=sub_id, label=sub.name, title=sub.name, size=5, color="#DEDEDE"))
                         edges.append(Edge(source=industry_id, target=sub_id, type="CURVE_SMOOTH"))
 
         config_kwargs = {
@@ -214,19 +162,19 @@ with graph_placeholder.container():
             })
 
         config = Config(**config_kwargs)
-
         graph_placeholder.empty()
         with graph_placeholder.container():
             agraph(nodes=nodes, edges=edges, config=config)
 
-# Footer
+# --- Footer ---
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center'>
-    <p>📊 Data Source: Global Industry Classification Standard (GICS)</p>
+    <p>📊 Data Source: NAICS & GICS</p>
     <p>📅 Last updated: 2024</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Close session
-session.close()
+# --- Close sessions ---
+naics_session.close()
+gics_session.close()
