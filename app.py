@@ -90,6 +90,40 @@ with col2:
     st.metric("Total Industries", naics_session.query(Industry).count())
     st.metric("Total Sub-Industries", naics_session.query(SubIndustry).count())
 
+
+
+# --- GICS Hierarchical View ---
+st.title("📊 GICS Hierarchy Explorer")
+st.header("📂 GICS Hierarchical View & Data Statistics")
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    gics_sectors = gics_session.query(GICSSector).all()
+    selected_gics_sector = st.selectbox("Select GICS Sector", ["All"] + [s.name for s in gics_sectors], index=0)
+
+    if selected_gics_sector == "All":
+        gics_sectors_to_display = gics_sectors
+    else:
+        gics_sectors_to_display = [s for s in gics_sectors if s.name == selected_gics_sector]
+
+    for sector in gics_sectors_to_display:
+        with st.expander(f"📁 {sector.name}", expanded=False):
+            for ig in sector.industry_groups:
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;📂 **{ig.name}**", unsafe_allow_html=True)
+                for ind in ig.industries:
+                    st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏭 **{ind.name}**", unsafe_allow_html=True)
+                    for sub in ind.sub_industries:
+                        st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏷 {sub.name}", unsafe_allow_html=True)
+        st.markdown("---")
+
+with col2:
+    st.header("📊 GICS Data Stats")
+    st.metric("Total Sectors", gics_session.query(GICSSector).count())
+    st.metric("Total Industry Groups", gics_session.query(GICSGroup).count())
+    st.metric("Total Industries", gics_session.query(GICSIndustry).count())
+    st.metric("Total Sub-Industries", gics_session.query(GICSSub).count())
+
+
 # --- Tree Graph from GICS DB ---
 
 st.title("🌳 GICS Tree Graph Explorer")
@@ -165,6 +199,7 @@ with graph_placeholder.container():
         graph_placeholder.empty()
         with graph_placeholder.container():
             agraph(nodes=nodes, edges=edges, config=config)
+
 
 # --- Footer ---
 st.markdown("---")
