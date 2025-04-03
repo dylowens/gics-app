@@ -95,6 +95,17 @@ with col2:
 # --- GICS Hierarchical View ---
 st.title("📊 GICS Hierarchy Explorer")
 st.header("📂 GICS Hierarchical View & Data Statistics")
+
+st.markdown("""
+Explore the **Global Industry Classification Standard (GICS)** through interactive visualizations.  
+GICS is a standardized system for classifying companies into sectors and industries, developed by MSCI (Morgan Stanley Capital International) and S&P Dow Jones.  
+
+<span style='font-size: 0.9em; color: gray;'><em>MSCI and S&P Dow Jones create tools to track and analyze markets.</em></span>  
+This classification system serves as a valuable reference for anyone looking to understand the structure of the global economy.
+
+🔗 [Learn more about GICS](https://www.msci.com/our-solutions/indexes/gics)
+""", unsafe_allow_html=True)
+
 col1, col2 = st.columns([3, 1])
 
 with col1:
@@ -114,7 +125,7 @@ with col1:
                     st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏭 **{ind.name}**", unsafe_allow_html=True)
                     for sub in ind.sub_industries:
                         st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏷 {sub.name}", unsafe_allow_html=True)
-        st.markdown("---")
+    st.markdown("---")
 
 with col2:
     st.header("📊 GICS Data Stats")
@@ -128,16 +139,6 @@ with col2:
 
 st.title("🌳 GICS Tree Graph Explorer")
 st.header(" Tree Graph - GICS")
-
-st.markdown("""
-Explore the **Global Industry Classification Standard (GICS)** through interactive visualizations.  
-GICS is a standardized system for classifying companies into sectors and industries, developed by MSCI (Morgan Stanley Capital International) and S&P Dow Jones.  
-
-<span style='font-size: 0.9em; color: gray;'><em>MSCI and S&P Dow Jones create tools to track and analyze markets.</em></span>  
-This classification system serves as a valuable reference for anyone looking to understand the structure of the global economy.
-
-🔗 [Learn more about GICS](https://www.msci.com/our-solutions/indexes/gics)
-""", unsafe_allow_html=True)
 
 layout_option = st.radio("Select Graph Layout", ["Hierarchical", "Force Directed"])
 graph_placeholder = st.empty()
