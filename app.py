@@ -81,7 +81,7 @@ with col1:
         else:
             sectors_to_display = [s for s in sectors if s.name == selected_sector]
 
-    html = generate_naics_html(sectors_to_display)
+    html = generate_naics_html(sectors_to_display, search_query_naics)
     st.markdown(html, unsafe_allow_html=True)
 
 with col2:
@@ -118,7 +118,7 @@ col1, col2 = st.columns([3, 1])
 
 
 with col1:
-    search_query = st.text_input("🔍 Search GICS by keyword (e.g., 'lawyer')", "").strip()
+    search_query = st.text_input("🔍 Search GICS by keyword (e.g., 'Oil')", "").strip()
 
     if search_query:
         gics_sectors_to_display = search_gics_hierarchy(gics_session, search_query)
