@@ -17,7 +17,7 @@ st.set_page_config(page_title="NAICS Hierarchy Explorer", page_icon="📊", layo
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 API_URL = "https://oqviryuptkdwbcbwkyxc.supabase.co/functions/v1/create-checkout-session"
 
-if st.button("☕ Buy Me a Coffee"):
+if st.button("☕ Buy Me a Coffee ($5)"):
     if not SUPABASE_ANON_KEY:
         st.error("❌ SUPABASE_ANON_KEY not set in environment variables.")
     else:
