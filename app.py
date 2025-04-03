@@ -140,72 +140,75 @@ with col2:
     st.metric("Total Industries", gics_session.query(GICSIndustry).count())
     st.metric("Total Sub-Industries", gics_session.query(GICSSub).count())
 
+    
 
-# --- Tree Graph from GICS DB ---
-
+# --- GICS Tree Graph Toggle ---
 st.title("🌳 GICS Tree Graph Explorer")
 st.header(" Tree Graph - GICS")
 
-layout_option = st.radio("Select Graph Layout", ["Hierarchical", "Force Directed"])
-graph_placeholder = st.empty()
+show_tree = st.toggle("📈 Show GICS Tree Graph", value=False)
 
-with graph_placeholder.container():
-    st.info("🔄 Initializing GICS Tree Graph...")
-    with st.spinner(f"Building {layout_option} structure..."):
-        nodes, edges = [], []
+if show_tree:
+    layout_option = st.radio("Select Graph Layout", ["Hierarchical", "Force Directed"])
+    graph_placeholder = st.empty()
 
-        root_id = "root_GICS"
-        nodes.append(Node(id=root_id, label="GICS", title="GICS", size=25, color="#FF4B4B"))
+    with graph_placeholder.container():
+        st.info("🔄 Initializing GICS Tree Graph...")
+        with st.spinner(f"Building {layout_option} structure..."):
+            nodes, edges = [], []
 
-        gics_sectors = gics_session.query(GICSSector).all()
-        for sector in gics_sectors:
-            sector_id = f"sector_{sector.id}"
-            nodes.append(Node(id=sector_id, label=sector.name, title=sector.name, size=20, color="#FF9B9B"))
-            edges.append(Edge(source=root_id, target=sector_id, type="CURVE_SMOOTH"))
+            root_id = "root_GICS"
+            nodes.append(Node(id=root_id, label="GICS", title="GICS", size=25, color="#FF4B4B"))
 
-            for ig in sector.industry_groups:
-                ig_id = f"ig_{ig.id}"
-                nodes.append(Node(id=ig_id, label=ig.name, title=ig.name, size=15, color="#4B4BFF"))
-                edges.append(Edge(source=sector_id, target=ig_id, type="CURVE_SMOOTH"))
+            gics_sectors = gics_session.query(GICSSector).all()
+            for sector in gics_sectors:
+                sector_id = f"sector_{sector.id}"
+                nodes.append(Node(id=sector_id, label=sector.name, title=sector.name, size=20, color="#FF9B9B"))
+                edges.append(Edge(source=root_id, target=sector_id, type="CURVE_SMOOTH"))
 
-                for industry in ig.industries:
-                    industry_id = f"ind_{industry.id}"
-                    nodes.append(Node(id=industry_id, label=industry.name, title=industry.name, size=10, color="#9B9BFF"))
-                    edges.append(Edge(source=ig_id, target=industry_id, type="CURVE_SMOOTH"))
+                for ig in sector.industry_groups:
+                    ig_id = f"ig_{ig.id}"
+                    nodes.append(Node(id=ig_id, label=ig.name, title=ig.name, size=15, color="#4B4BFF"))
+                    edges.append(Edge(source=sector_id, target=ig_id, type="CURVE_SMOOTH"))
 
-                    for sub in industry.sub_industries:
-                        sub_id = f"sub_{sub.id}"
-                        nodes.append(Node(id=sub_id, label=sub.name, title=sub.name, size=5, color="#DEDEDE"))
-                        edges.append(Edge(source=industry_id, target=sub_id, type="CURVE_SMOOTH"))
+                    for industry in ig.industries:
+                        industry_id = f"ind_{industry.id}"
+                        nodes.append(Node(id=industry_id, label=industry.name, title=industry.name, size=10, color="#9B9BFF"))
+                        edges.append(Edge(source=ig_id, target=industry_id, type="CURVE_SMOOTH"))
 
-        config_kwargs = {
-            "width": 1200,
-            "height": 800,
-            "directed": True,
-            "physics": True,
-            "hierarchical": layout_option == "Hierarchical",
-            "node_size": 1000,
-            "node_color": "#666",
-            "node_text_size": 10,
-            "edge_color": "#666",
-            "edge_width": 1,
-            "drag_nodes": True,
-            "drag_edges": False,
-            "fit_view": True
-        }
+                        for sub in industry.sub_industries:
+                            sub_id = f"sub_{sub.id}"
+                            nodes.append(Node(id=sub_id, label=sub.name, title=sub.name, size=5, color="#DEDEDE"))
+                            edges.append(Edge(source=industry_id, target=sub_id, type="CURVE_SMOOTH"))
 
-        if layout_option == "Hierarchical":
-            config_kwargs.update({
-                "hierarchical_sort_method": "directed",
-                "hierarchical_direction": "UD",
-                "hierarchical_level_separation": 150,
-                "hierarchical_node_separation": 150
-            })
+            config_kwargs = {
+                "width": 1200,
+                "height": 800,
+                "directed": True,
+                "physics": True,
+                "hierarchical": layout_option == "Hierarchical",
+                "node_size": 1000,
+                "node_color": "#666",
+                "node_text_size": 10,
+                "edge_color": "#666",
+                "edge_width": 1,
+                "drag_nodes": True,
+                "drag_edges": False,
+                "fit_view": True
+            }
 
-        config = Config(**config_kwargs)
-        graph_placeholder.empty()
-        with graph_placeholder.container():
-            agraph(nodes=nodes, edges=edges, config=config)
+            if layout_option == "Hierarchical":
+                config_kwargs.update({
+                    "hierarchical_sort_method": "directed",
+                    "hierarchical_direction": "UD",
+                    "hierarchical_level_separation": 150,
+                    "hierarchical_node_separation": 150
+                })
+
+            config = Config(**config_kwargs)
+            graph_placeholder.empty()
+            with graph_placeholder.container():
+                agraph(nodes=nodes, edges=edges, config=config)
 
 
 # --- Footer ---
