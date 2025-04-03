@@ -7,6 +7,8 @@ from streamlit_agraph import agraph, Node, Edge, Config
 from models.models import Sector as GICSSector, IndustryGroup as GICSGroup, Industry as GICSIndustry, SubIndustry as GICSSub
 from models.naics_models import Sector, IndustryGroup, Industry, SubIndustry  # NAICS models
 from gics_search_utils import search_gics_hierarchy
+from naics_search_utils import search_naics_hierarchy
+from utils.html_naics_view import generate_naics_html
 
 # --- Page Setup ---
 st.set_page_config(page_title="NAICS Hierarchy Explorer", page_icon="📊", layout="wide")
@@ -61,31 +63,36 @@ It organizes the economy into a structured hierarchy—from broad sectors to det
 🔗 [Learn more about NAICS](https://www.census.gov/naics/)
 """, unsafe_allow_html=True)
 
-# --- Hierarchical View ---
-st.header("📂 Hierarchical View & Data Statistics")
+
+# --- NAICS Hierarchical View ---
+st.header("📂 NAICS Hierarchical View & Data Statistics")
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    sectors = naics_session.query(Sector).all()
-    selected_sector = st.selectbox("Select Sector", ["All"] + [s.name for s in sectors], index=0)
+    search_query_naics = st.text_input("🔍 Search NAICS by keyword (e.g., 'rice')", "").strip()
 
-    if selected_sector == "All":
-        sectors_to_display = sectors
+    if search_query_naics:
+        sectors_to_display = search_naics_hierarchy(naics_session, search_query_naics)
     else:
-        sectors_to_display = [s for s in sectors if s.name == selected_sector]
+        sectors = naics_session.query(Sector).all()
+        selected_sector = st.selectbox("Select Sector", ["All"] + [s.name for s in sectors], index=0)
+        if selected_sector == "All":
+            sectors_to_display = sectors
+        else:
+            sectors_to_display = [s for s in sectors if s.name == selected_sector]
 
-    for sector in sectors_to_display:
-        with st.expander(f"📁 {sector.name}", expanded=False):
-            for ig in sector.industry_groups:
-                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;📂 **{ig.code} - {ig.name}**", unsafe_allow_html=True)
-                for ind in ig.industries:
-                    st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏭 **{ind.code} - {ind.name}**", unsafe_allow_html=True)
-                    for sub in ind.sub_industries:
-                        st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏷 {sub.name}", unsafe_allow_html=True)
-            st.markdown("---")
+    html = generate_naics_html(sectors_to_display)
+    st.markdown(html, unsafe_allow_html=True)
 
 with col2:
-    st.header("📊 Data Statistics")
+    st.header("📊 NAICS Data Stats")
+    st.metric("Total Sectors", naics_session.query(Sector).count())
+    st.metric("Total Industry Groups", naics_session.query(IndustryGroup).count())
+    st.metric("Total Industries", naics_session.query(Industry).count())
+    st.metric("Total Sub-Industries", naics_session.query(SubIndustry).count())
+
+with col2:
+    st.header("📊 NAICS Data Stats")
     st.metric("Total Sectors", naics_session.query(Sector).count())
     st.metric("Total Industry Groups", naics_session.query(IndustryGroup).count())
     st.metric("Total Industries", naics_session.query(Industry).count())
@@ -140,7 +147,7 @@ with col2:
     st.metric("Total Industries", gics_session.query(GICSIndustry).count())
     st.metric("Total Sub-Industries", gics_session.query(GICSSub).count())
 
-    
+
 
 # --- GICS Tree Graph Toggle ---
 st.title("🌳 GICS Tree Graph Explorer")
