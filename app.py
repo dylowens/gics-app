@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from streamlit_agraph import agraph, Node, Edge, Config
 from models.models import Sector as GICSSector, IndustryGroup as GICSGroup, Industry as GICSIndustry, SubIndustry as GICSSub
 from models.naics_models import Sector, IndustryGroup, Industry, SubIndustry  # NAICS models
+from gics_search_utils import search_gics_hierarchy
 
 # --- Page Setup ---
 st.set_page_config(page_title="NAICS Hierarchy Explorer", page_icon="📊", layout="wide")
@@ -108,14 +109,19 @@ This classification system serves as a valuable reference for anyone looking to 
 
 col1, col2 = st.columns([3, 1])
 
-with col1:
-    gics_sectors = gics_session.query(GICSSector).all()
-    selected_gics_sector = st.selectbox("Select GICS Sector", ["All"] + [s.name for s in gics_sectors], index=0)
 
-    if selected_gics_sector == "All":
-        gics_sectors_to_display = gics_sectors
+with col1:
+    search_query = st.text_input("🔍 Search GICS by keyword (e.g., 'lawyer')", "").strip()
+
+    if search_query:
+        gics_sectors_to_display = search_gics_hierarchy(gics_session, search_query)
     else:
-        gics_sectors_to_display = [s for s in gics_sectors if s.name == selected_gics_sector]
+        gics_sectors = gics_session.query(GICSSector).all()
+        selected_gics_sector = st.selectbox("Select GICS Sector", ["All"] + [s.name for s in gics_sectors], index=0)
+        if selected_gics_sector == "All":
+            gics_sectors_to_display = gics_sectors
+        else:
+            gics_sectors_to_display = [s for s in gics_sectors if s.name == selected_gics_sector]
 
     for sector in gics_sectors_to_display:
         with st.expander(f"📁 {sector.name}", expanded=False):
