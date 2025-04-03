@@ -5,4 +5,5 @@ plotly
 pyvis
 sqlalchemy
 requests
-streamlit-agraph 
+streamlit-agraph
+beautifulsoup4 
