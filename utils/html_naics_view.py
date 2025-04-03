@@ -9,7 +9,7 @@ def generate_naics_html(sectors, keyword):
         if index >= 0:
             return (
                 text[:index] +
-                f"<span style='background-color: #ffff66; font-weight: bold;'>{text[index:index+len(kw)]}</span>" +
+                f"<span style='background-color: #ffff66;'>{text[index:index+len(kw)]}</span>" +
                 text[index+len(kw):]
             )
         return text
@@ -39,28 +39,20 @@ def generate_naics_html(sectors, keyword):
     html = "<div>"
     for sector in sectors:
         sector_hit = sector.name in matched_codes["sector"]
-        sector_label_raw = highlight(sector.name, keyword)
-        sector_label = f"<b>{sector_label_raw}</b>" if sector_hit else sector_label_raw
-        sector_open = " open" if sector_hit else ""
-        html += f"<details{sector_open}><summary>📁 {sector_label}</summary>"
+        sector_label = f"<b>{sector.name}</b>" if sector_hit else sector.name
+        html += f"<details><summary>📁 {sector_label}</summary>"
 
         for ig in sector.industry_groups:
             ig_hit = ig.code in matched_codes["ig"]
-            ig_text_raw = f"{ig.code} - {ig.name}"
-            ig_label = highlight(ig_text_raw, keyword)
-            if ig_hit:
-                ig_label = f"<b>{ig_label}</b>"
-            ig_open = " open" if ig_hit else ""
-            html += f"<details style='margin-left:20px'{ig_open}><summary>📂 {ig_label}</summary>"
+            ig_text = f"{ig.code} - {ig.name}"
+            ig_label = f"<b>{ig_text}</b>" if ig_hit else ig_text
+            html += f"<details style='margin-left:20px'><summary>📂 {ig_label}</summary>"
 
             for ind in ig.industries:
                 ind_hit = ind.code in matched_codes["ind"]
-                ind_text_raw = f"{ind.code} - {ind.name}"
-                ind_label = highlight(ind_text_raw, keyword)
-                if ind_hit:
-                    ind_label = f"<b>{ind_label}</b>"
-                ind_open = " open" if ind_hit else ""
-                html += f"<details style='margin-left:40px'{ind_open}><summary>🏭 {ind_label}</summary>"
+                ind_text = f"{ind.code} - {ind.name}"
+                ind_label = f"<b>{ind_text}</b>" if ind_hit else ind_text
+                html += f"<details style='margin-left:40px'><summary>🏭 {ind_label}</summary>"
 
                 for sub in ind.sub_industries:
                     sub_text = f"{sub.code} - {sub.name}"
