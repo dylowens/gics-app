@@ -1,8 +1,9 @@
-# naics_search_utils.py
+#naics_search_utils.py
 
-from typing import List, Set
+from typing import List
 from sqlalchemy.orm import Session
-from models.naics_models import Sector, IndustryGroup, Industry, SubIndustry
+from models.naics_models import SubIndustry
+from rapidfuzz import fuzz
 
 def highlight_keyword(text: str, keyword: str) -> str:
     if not keyword:
@@ -17,37 +18,34 @@ def highlight_keyword(text: str, keyword: str) -> str:
         )
     return text
 
-def search_naics_hierarchy(session: Session, keyword: str) -> List[Sector]:
+def smart_search_subindustries(session: Session, q: str) -> List[dict]:
     """
-    Search all NAICS levels and return a list of matching sectors.
-    Highlights keyword in names (HTML-safe).
+    Smart search:
+    1. Try All Keywords Match
+    2. If empty, try Partial Match
+    3. If still empty, try Fuzzy Match
     """
-    keyword = keyword.strip()
-    if not keyword:
-        return session.query(Sector).all()
+    q = q.strip()
+    if not q:
+        return []
 
-    query = f"%{keyword}%"
-    matching_sectors: Set[Sector] = set()
+    # 1. All keywords match
+    words = q.split()
+    query = session.query(SubIndustry)
+    for word in words:
+        query = query.filter(SubIndustry.name.ilike(f"%{word}%"))
+    results = query.all()
 
-    subs = session.query(SubIndustry).filter(SubIndustry.name.ilike(query)).all()
-    for sub in subs:
-        sub.name = highlight_keyword(sub.name, keyword)
-        if sub.industry:
-            matching_sectors.add(sub.industry.industry_group.sector)
+    if results:
+        return [{"code": r.code, "name": highlight_keyword(r.name, q)} for r in results]
 
-    inds = session.query(Industry).filter(Industry.name.ilike(query)).all()
-    for ind in inds:
-        ind.name = highlight_keyword(ind.name, keyword)
-        matching_sectors.add(ind.industry_group.sector)
+    # 2. Partial match
+    results = session.query(SubIndustry).filter(SubIndustry.name.ilike(f"%{q}%")).all()
+    if results:
+        return [{"code": r.code, "name": highlight_keyword(r.name, q)} for r in results]
 
-    igs = session.query(IndustryGroup).filter(IndustryGroup.name.ilike(query)).all()
-    for ig in igs:
-        ig.name = highlight_keyword(ig.name, keyword)
-        matching_sectors.add(ig.sector)
-
-    secs = session.query(Sector).filter(Sector.name.ilike(query)).all()
-    for sec in secs:
-        sec.name = highlight_keyword(sec.name, keyword)
-        matching_sectors.add(sec)
-
-    return list(matching_sectors)
+    # 3. Fuzzy match
+    all_rows = session.query(SubIndustry).all()
+    scored = [(r, fuzz.partial_ratio(q.lower(), r.name.lower())) for r in all_rows]
+    results = [r for r, score in sorted(scored, key=lambda x: x[1], reverse=True) if score > 80][:10]
+    return [{"code": r.code, "name": highlight_keyword(r.name, q)} for r in results]
