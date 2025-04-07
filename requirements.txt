@@ -8,3 +8,4 @@ requests
 streamlit-agraph
 beautifulsoup4 
 dotenv
+rapidfuzz
