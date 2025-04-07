@@ -69,11 +69,40 @@ st.header("📂 NAICS Hierarchical View & Data Statistics")
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    search_query_naics = st.text_input("🔍 Search NAICS by keyword (e.g., 'rice')", "").strip()
+    # Initial search input
+    search_query_naics = st.text_input(
+        "🔍 Search NAICS by keyword (e.g., 'rice')",
+        value=st.session_state.get("naics_query", ""),
+        key="naics_input"
+    ).strip()
 
-    if search_query_naics:
-        sectors_to_display = search_naics_hierarchy(naics_session, search_query_naics)
-    else:
+    # Run search
+    sectors_to_display, suggestion = search_naics_hierarchy(naics_session, search_query_naics)
+
+    # Show suggestion if fuzzy matched
+    if suggestion and suggestion.lower() != search_query_naics.lower():
+        # Create a unique key for the suggestion button
+        if st.button(f"🔁 Did you mean: {suggestion}", key="suggestion_button"):
+            st.session_state["naics_query"] = suggestion
+            st.rerun()
+
+        # Inject yellow styling for the Streamlit button via CSS
+        st.markdown("""
+            <style>
+            button[kind="secondary"] {
+                background-color: #fff176 !important;
+                color: black !important;
+                font-weight: bold;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        if "corrected" in st.session_state:
+            st.session_state["naics_query"] = st.session_state["corrected"]
+            st.rerun()
+            
+    # Fallback to full list if no input
+    if not search_query_naics:
         sectors = naics_session.query(Sector).all()
         selected_sector = st.selectbox("Select Sector", ["All"] + [s.name for s in sectors], index=0)
         if selected_sector == "All":
