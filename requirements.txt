@@ -7,3 +7,4 @@ sqlalchemy
 requests
 streamlit-agraph
 beautifulsoup4 
+dotenv
