@@ -18,7 +18,7 @@ def highlight_keyword(text: str, keyword: str) -> str:
         )
     return text
 
-def smart_search_subindustries(session: Session, q: str) -> List[dict]:
+def search_naics_hierarchy(session: Session, q: str) -> List[dict]:
     """
     Smart search:
     1. Try All Keywords Match
